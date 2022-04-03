@@ -54,13 +54,11 @@ internal static class FSEmit {
             WriteDual(src_sw, sig_sw, ln);
         }
 
-        // Write class
-        foreach (string ln in G.InClass) {
-            src_sw.WriteLine(ln);
-        }
+        // Write types
+        WriteTypes(src_sw, sig_sw, G);
 
         // Write parse table to .fs file
-        WriteTable(src_sw, sig_sw, table);
+        WriteTable(src_sw, sig_sw, table, G.EmptySymbol.Index, Grammar.EndOfInput.Index);
 
         // Write semantics
         WriteDual(src_sw, sig_sw, "// Semantic dispatcher");
@@ -90,11 +88,13 @@ internal static class FSEmit {
         // Write productions
         src_sw.WriteLine("// Productions");
         src_sw.WriteLine("let prod_list = [");
-        for (int i = 0; i < G.Productions.Count; i++) {
-            src_sw.Write($"    ({i}, [{string.Join(';', G.Productions[i].Rhs.Select(x => x.Index))}])");
-            if (i + 1 < G.Productions.Count) {
+        int j = 0;
+        foreach (var p in G.Productions.OrderBy(x => x.Index)) {
+            src_sw.Write($"    ({p.Lhs.Index}, [{string.Join(';', p.Rhs.Select(x => x.Index))}])");
+            if (j + 1 < G.Productions.Count) {
                 src_sw.WriteLine(";");
             }
+            j++;
         }
         src_sw.WriteLine("]");
         src_sw.WriteLine("");
@@ -128,7 +128,7 @@ internal static class FSEmit {
         src.WriteLine($"let {name} {args} = {body}");
     }
 
-    internal static void WriteTable(StreamWriter src, StreamWriter sig, Table<LR1Action> table) {
+    internal static void WriteTypes(StreamWriter src, StreamWriter sig, Grammar G) {
 
         // Write action type
         WriteDual(src, sig, "// Parser actions");
@@ -157,6 +157,15 @@ internal static class FSEmit {
         src.WriteLine("let e = Error");
         src.WriteLine();
 
+        // Write class
+        foreach (string ln in G.InClass) {
+            src.WriteLine(ln);
+        }
+
+    }
+
+    internal static void WriteTable(StreamWriter src, StreamWriter sig, Table<LR1Action> table, int eps, int eof) {
+
         // Loop over
         src.WriteLine("// Lookup table");
         src.WriteLine("let _table =");
@@ -166,7 +175,7 @@ internal static class FSEmit {
             for (int col = 0; col < table.Columns; col++) {
 
                 // Get cell
-                var cell = table.GetCell(row, col);
+                var cell = table[row, col];
 
                 // Action type
                 var arg = cell.Action switch {
@@ -200,8 +209,16 @@ internal static class FSEmit {
         // Write lookup
         WriteDual(src, sig, "// Lookup function for lookup up the next action in table");
         WriteFunc(src, sig, "table_lookup", "uint64 -> int -> Action", "(state: uint64) (sym: int)", "_table[int state, sym]");
+        WriteDual(src, sig, "");
 
-        // Write lookup
+        // Write eps ID
+        WriteDual(src, sig, "// index of eps ");
+        WriteFunc(src, sig, "eps_id", "int", "", eps.ToString());
+        WriteDual(src, sig, "");
+
+        // Write eof ID
+        WriteDual(src, sig, "// index of EOF ");
+        WriteFunc(src, sig, "eof_id", "int", "", eof.ToString());
         WriteDual(src, sig, "");
 
     }

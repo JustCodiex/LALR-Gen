@@ -2,6 +2,7 @@
 using ParserGen;
 
 // Log output
+Console.ForegroundColor = ConsoleColor.Magenta;
 Console.WriteLine("@@ LALR-Parser generator");
 Console.WriteLine("@@ Grammar file = grammar.g");
 Console.WriteLine("@@ Target Language = F#");
@@ -10,6 +11,7 @@ Console.WriteLine("@@ Language output = parsersemantics.fs");
 
 // Bail if grammar is not there
 if (!File.Exists("grammar.g")) {
+    Console.ForegroundColor = ConsoleColor.Red;
     Console.WriteLine("Grammar file not implemented.");
     return;
 }

@@ -49,6 +49,7 @@ internal partial class LR1 {
         this.GetClosures();
 
         // Log
+        Console.ForegroundColor = ConsoleColor.Magenta;
         Console.WriteLine("Generated FIRST-set, FOLLOW-set and closure sets.");
 
         // Get states from closures
@@ -77,8 +78,10 @@ internal partial class LR1 {
         }
 
         // Log
+        Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine("Successfully generated table.");
         Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.White;
 
     }
 

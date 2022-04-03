@@ -142,7 +142,7 @@ internal partial class LR1 {
 
             // Log shift/reduce conflicts
             if (src.Length > 0) {
-                Console.WriteLine($"Detected {src.Length} shift/shift conflicts");
+                Console.WriteLine($"Detected {src.Length} shift/reduce conflicts");
                 sw.WriteLine("Shift/Reduce conflicts:");
                 foreach (var sr in src) {
                     sw.Write($"\tIn state {sr.ConflictState}, there's a conflict in ");

@@ -103,6 +103,8 @@ internal class Grammar {
         InClassData,
     }
 
+    internal static bool Verbose { get; set; } = false;
+
     internal static Grammar? FromFile(string file) {
 
         // Read in data
@@ -153,11 +155,11 @@ internal class Grammar {
                     if (lines[i].StartsWith("@using")) {
                         mode = ReadMode.UsingsData;
                         Console.WriteLine();
-                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.ForegroundColor = ConsoleColor.DarkMagenta;
                         continue;
                     } else if (lines[i].StartsWith("@class")) {
                         Console.WriteLine();
-                        Console.ForegroundColor = ConsoleColor.Magenta;
+                        Console.ForegroundColor = ConsoleColor.DarkMagenta;
                         mode = ReadMode.InClassData;
                         grammar.InClassStartIndex = i;
                         continue;
@@ -199,7 +201,7 @@ internal class Grammar {
         }
 
         // Log detected productions
-        Console.ForegroundColor = ConsoleColor.White;
+        Console.ForegroundColor = ConsoleColor.Magenta;
         Console.WriteLine();
         Console.WriteLine();
         Console.WriteLine("The following productions were detected:");
@@ -240,9 +242,11 @@ internal class Grammar {
         Symbol[] tokens = m.Groups["tokens"].Value.Split(' ').Where(x => !string.IsNullOrEmpty(x)).Select(x => NewSymbol(G, x, true)).ToArray();
 
         G.Priorities.Add(new(priocntr++, Enum.Parse<Association>(m.Groups["type"].Value), tokens));
-        
-        Console.ForegroundColor = ConsoleColor.DarkCyan;
-        Console.WriteLine($"Registered precedence rule [{G.Priorities[^1].Association} - {string.Join(", ", G.Priorities[^1].Tokens.Select(x => x.Sym))}]");
+
+        if (Verbose) {
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine($"Registered precedence rule [{G.Priorities[^1].Association} - {string.Join(", ", G.Priorities[^1].Tokens.Select(x => x.Sym))}]");
+        }
 
     }
 
@@ -274,8 +278,11 @@ internal class Grammar {
 
         // Register
         G.Productions.Add(R);
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.WriteLine($"{(P is null ? "Creating" : "Extending")} grammar rule [{R}]");
+
+        if (Verbose) {
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine($"{(P is null ? "Creating" : "Extending")} grammar rule [{R}]");
+        }
 
         // Return created rule
         return R;
@@ -286,8 +293,10 @@ internal class Grammar {
         if (G.Symbols.ContainsKey(sym)) {
             return G.Symbols[sym];
         } else {
-            Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine($"Adding symbol '{sym}' as {(terminal ? "terminal" : "non-terminal")}");
+            if (Verbose) {
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                Console.WriteLine($"Adding symbol '{sym}' as {(terminal ? "terminal" : "non-terminal")}");
+            }
             return G.Symbols[sym] = new Symbol(sym, terminal);
         }
     }
@@ -312,8 +321,10 @@ internal class Grammar {
                 Console.WriteLine($"Error: The production entry '{s}' has one or more unmatched macro parenthesis sets.");
             } else if (!g.Symbols.ContainsKey(s)) {
                 symbols.Add(g.Symbols[s] = new(s, Symbol.IsTerminalStr(s)));
-                Console.ForegroundColor = ConsoleColor.DarkGreen;
-                Console.WriteLine($"Adding symbol '{s}' as {(g.Symbols[s].IsTerminal ? "terminal" : "non-terminal")}");
+                if (Verbose) {
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.WriteLine($"Adding symbol '{s}' as {(g.Symbols[s].IsTerminal ? "terminal" : "non-terminal")}");
+                }
             } else {
                 symbols.Add(g.Symbols[s]);
             }

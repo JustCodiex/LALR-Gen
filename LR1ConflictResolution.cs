@@ -146,7 +146,7 @@ internal partial class LR1 {
                 sw.WriteLine("Shift/Reduce conflicts:");
                 foreach (var sr in src) {
                     sw.Write($"\tIn state {sr.ConflictState}, there's a conflict in ");
-                    sw.WriteLine($"shifting to state {sr.Shift} or reducing by production {sr.Reduce} on symbol {sr.Symbol.Sym}");
+                    sw.WriteLine($"shifting to state {sr.Shift} or reducing by production {sr.Reduce+1} on symbol {sr.Symbol.Sym}");
                 }
                 sw.WriteLine();
             }
@@ -166,7 +166,7 @@ internal partial class LR1 {
                 Console.WriteLine($"Detected {rrc.Length} reduce/reduce conflicts"); sw.WriteLine("Reduce/Reduce conflicts:");
                 foreach (var rr in rrc) {
                     sw.Write($"\tIn state {rr.ConflictState}, there's a conflict in ");
-                    sw.WriteLine($"reducing by production {rr.First} or reducing by production {rr.Second} on symbol {rr.Symbol.Sym}.");
+                    sw.WriteLine($"reducing by production {rr.First+1} or reducing by production {rr.Second+1} on symbol {rr.Symbol.Sym}.");
                 }
                 sw.WriteLine();
             }

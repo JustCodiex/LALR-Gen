@@ -52,13 +52,14 @@ internal partial class LR1 {
 
                         // Loop over all firsts and collect those
                         if (this.FirstSets.ContainsKey(rule.Rhs[j])) {
-                            foreach (Symbol s in this.FirstSets[rule.Rhs[j]]) {
+                            var firstsSets = this.FirstSets[rule.Rhs[j]];
+                            for (int k = 0; k < firstsSets.Count; k++) {
 
                                 // Update eps
-                                eps |= s.IsNullable;
+                                eps |= firstsSets[k].IsNullable;
 
                                 // Add symbol to current first set
-                                updated |= firsts.Add(s);
+                                updated |= firsts.Add(firstsSets[k]);
 
                             }
                         }
@@ -129,19 +130,16 @@ internal partial class LR1 {
                         var after = this.GetFirstSeq(rule.Rhs[(j + 1)..]);
 
                         // Loop over each symbol
-                        foreach (var s in after) {
+                        for (int k = 0; k < after.Count; k++) { 
+                            
+                            if (after[k].IsNullable) {
 
-                            // If empty symbol
-                            if (s.IsNullable) {
-
-                                foreach (var nt in followslhs) {
-                                    updated |= follows.Add(nt);
+                                for (int l = 0; l < followslhs.Count; l++) {
+                                    updated |= follows.Add(followslhs[l]);
                                 }
 
                             } else {
-
-                                updated |= follows.Add(s);
-
+                                updated |= follows.Add(after[k]);
                             }
 
                         }
@@ -174,19 +172,22 @@ internal partial class LR1 {
                 break;
             }
 
+            // Grab firsts
+            var firsts = this.FirstSets[seq[i]];
+
             // Foreach k in first of seq[i]
-            foreach (Symbol k in this.FirstSets[seq[i]]) {
+            for (int j = 0; j < firsts.Count; j++) {
 
                 // Update eps
-                eps |= k.IsNullable;
+                eps |= firsts[j].IsNullable;
 
                 // Add symbol to result
-                result.Add(k);
+                result.Add(firsts[j]);
 
             }
 
             // Update eps properly
-            eps |= !this.FirstSets.ContainsKey(seq[i]) || this.FirstSets[seq[i]].Count == 0;
+            eps |= !this.FirstSets.ContainsKey(seq[i]) || firsts.Count == 0;
 
             // If not eps break
             if (!eps)

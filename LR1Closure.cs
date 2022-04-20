@@ -44,8 +44,8 @@ internal partial class LR1 {
             var newItems = kernel.Closure[i].GetAfterDot(this);
 
             // Add new items to kernel closure
-            foreach (var item in newItems) {
-                item.AddUniqueItemsTo(kernel.Closure);
+            for (int j = 0; j < newItems.Count; j++) {
+                newItems[j].AddUniqueItemsTo(kernel.Closure);
             }
 
             // go to next closure
@@ -64,7 +64,10 @@ internal partial class LR1 {
         Dictionary<Symbol, Set<LR1Item>> newKernels = new();
 
         // Loop over all items in closure
-        foreach (var item in current.Closure) {
+        for (int i = 0; i < current.Closure.Count; i++) {
+
+            // Assign
+            var item = current.Closure[i];
 
             // Get next item
             if (item.GetAfterShift(this) is LR1Item nextItem) {
@@ -85,24 +88,28 @@ internal partial class LR1 {
 
             }
 
+
         }
 
         // Loop over keys in current
-        foreach (Symbol k in current.Keys) {
+        for (int i = 0; i < current.Keys.Count; i++) {
 
-            var newKernel = new LR1Kernel(kernels.Count, newKernels[k]);
-            int i = IndexOf(newKernel, kernels);
+            // Grab k
+            Symbol s = current.Keys[i];
 
-            if (i < 0) {
+            var newKernel = new LR1Kernel(kernels.Count, newKernels[s]);
+            int j = IndexOf(newKernel, kernels);
+
+            if (j < 0) {
                 kernels.Add(newKernel);
-                i = newKernel.Index;
+                j = newKernel.Index;
             } else {
-                for (int j = 0; j < newKernel.Items.Count; j++) {
-                    propogated |= newKernel.Items[j].AddUniqueItemsTo(kernels[i].Items);
+                for (int k = 0; k < newKernel.Items.Count; k++) {
+                    propogated |= newKernel.Items[k].AddUniqueItemsTo(kernels[j].Items);
                 }
             }
 
-            current.Gotos[k] = i;
+            current.Gotos[s] = j;
 
         }
 

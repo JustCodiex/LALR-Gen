@@ -24,18 +24,19 @@ internal class LR1Item {
 
     }
 
-    public bool AddUniqueItemsTo(ICollection<LR1Item> items) {
+    public bool AddUniqueItemsTo(Set<LR1Item> items) {
 
         bool result = false;
 
-        foreach (var item in items) {
+        for (int i = 0; i < items.Count; i++) {
 
-            if (item.Rule == this.Rule && item.Pos == this.Pos) {
-                foreach (var s in this.Lookahead) {
-                    result |= item.Lookahead.Add(s);
+            if (items[i].Rule == this.Rule && items[i].Pos == this.Pos) {
+                for (int j = 0; j < this.Lookahead.Count; j++) {
+                    result |= items[i].Lookahead.Add(this.Lookahead[j]);
                 }
                 return result;
             }
+
 
         }
 
@@ -66,10 +67,11 @@ internal class LR1Item {
             return result;
         }
 
-        foreach (var p in GetRulesForNonterminal(lr.G, this.Rule.Rhs[this.Pos])) {
+        var prods = GetRulesForNonterminal(lr.G, this.Rule.Rhs[this.Pos]);
+        for (int i = 0; i < prods.Count; i++) {
 
-            LR1Item itm = lr.Item(p, 0);
-            result.Add(itm, (a,b) => a.Equals(b));
+            LR1Item itm = lr.Item(prods[i], 0);
+            result.Add(itm, (a, b) => a.Equals(b));
 
         }
 
@@ -81,24 +83,26 @@ internal class LR1Item {
         bool eps = false;
         var firsts = lr.GetFirstSeq(this.Rule.Rhs[(this.Pos + 1)..]);
 
-        foreach (Symbol s in firsts) {
-            if (s.IsNullable) {
+        for (int i = 0; i < firsts.Count; i++) {
+
+            if (firsts[i].IsNullable) {
                 eps = true;
             } else {
-                newLookahead.Add(s);
+                newLookahead.Add(firsts[i]);
             }
+
         }
 
         if (eps) {
-            foreach (Symbol s in this.Lookahead) {
-                newLookahead.Add(s);
+            for (int i = 0; i < this.Lookahead.Count; i++) {
+                newLookahead.Add(this.Lookahead[i]);
             }
         }
 
         for (int i = 0; i < result.Count; i++) {
             result[i].Lookahead.Clear();
-            foreach (Symbol s in newLookahead) {
-                result[i].Lookahead.Add(s);
+            for (int j = 0; j < newLookahead.Count; j++) {
+                result[i].Lookahead.Add(newLookahead[j]);
             }
         }
 
@@ -110,9 +114,9 @@ internal class LR1Item {
 
         List<Production> rules = new List<Production>();
 
-        foreach (Production rule in G.Productions) {
-            if (rule.Lhs == symbol) {
-                rules.Add(rule);
+        for (int i = 0; i < G.Productions.Count; i++) {
+            if (G.Productions[i].Lhs == symbol) {
+                rules.Add(G.Productions[i]);
             }
         }
 

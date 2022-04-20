@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 
 namespace ParserGen;     
+
 internal class Set<T> : IEnumerable<T>, ICollection<T> {
 
     private readonly List<T> m_items;
@@ -12,7 +13,7 @@ internal class Set<T> : IEnumerable<T>, ICollection<T> {
     public bool IsReadOnly => ((ICollection<T>)this.m_items).IsReadOnly;
 
     public Set() {
-        this.m_items = new();
+        this.m_items = new(128); // Create new list with capacity of 128 elements -> we are greedy on memory in the hopes of avoiding too many resizes
     }
 
     public Set(Set<T> baseSet) {
@@ -28,27 +29,33 @@ internal class Set<T> : IEnumerable<T>, ICollection<T> {
     public void Clear() => this.m_items.Clear();
 
     public bool Add(T item) {
-        if (!this.m_items.Any(x => x is not null && x.Equals(item))) {
-            this.m_items.Add(item);
-            return true;
+        for (int i = 0; i < this.m_items.Count; i++) {
+            var itm = this.m_items[i];
+            if (itm is not null && itm.Equals(item)) {
+                return false;
+            }
         }
-        return false;
+        this.m_items.Add(item);
+        return true;
     }
 
     public bool Add(T item, Func<T, T, bool> predicate) {
-        if (!this.m_items.Any(x => predicate(item, x))) {
-            this.m_items.Add(item);
-            return true;
+        for (int i = 0; i < this.m_items.Count; i++) {
+            var itm = this.m_items[i];
+            if (predicate(item, itm)) {
+                return false;
+            }
         }
-        return false;
+        this.m_items.Add(item);
+        return true;
     }
 
     public bool Remove(T item) => this.m_items.Remove(item);
 
     public int Union(Set<T> other) {
         int count = 0;
-        foreach (T item in other) {
-            if (this.Add(item)) {
+        for (int i = 0; i < other.m_items.Count; i++) {
+            if (this.Add(other.m_items[i])) {
                 count++;
             }
         }
@@ -65,13 +72,13 @@ internal class Set<T> : IEnumerable<T>, ICollection<T> {
     }
 
     public bool ContainsEachother(Set<T> other) {
-        foreach (var item in this.m_items) {
-            if (!other.Contains(item, (a,b) => a?.Equals(b) ?? false)) {
+        for (int i = 0; i < this.m_items.Count; i++) {
+            if (!other.Contains(this.m_items[i], (a,b) => a?.Equals(b) ?? false)) {
                 return false;
             }
         }
-        foreach (var item in other.m_items) {
-            if (!this.Contains(item, (a, b) => a?.Equals(b) ?? false)) {
+        for (int i = 0; i < other.m_items.Count; i++) {
+            if (!this.Contains(other.m_items[i], (a, b) => a?.Equals(b) ?? false)) {
                 return false;
             }
         }

@@ -62,10 +62,10 @@ internal static class FSEmit {
 
         // Write semantics
         WriteDual(src_sw, sig_sw, "// Semantic dispatcher");
-        sig_sw.WriteLine("val sem_dispatch : StackElement list -> int -> SemanticAction");
-        src_sw.WriteLine("let sem_dispatch stack = function");
+        sig_sw.WriteLine("val sem_dispatch : StackElement list -> int * int -> int -> SemanticAction");
+        src_sw.WriteLine("let sem_dispatch stack (sl,sc) = function");
         for (int i = 0; i < G.Productions.Count; i++) {
-            src_sw.WriteLine($"| {i} -> {{ nodeType = {new FSharpSemanticAction(G.Productions[i])}; stack = stack }}");
+            src_sw.WriteLine($"| {i} -> {{ nodeType = {new FSharpSemanticAction(G.Productions[i])}; stack = stack; srcline=sl; srccol=sc }}");
         }
         src_sw.WriteLine($"| _ -> failwith \"Invalid semantic action ID\"");
         src_sw.WriteLine();
@@ -118,7 +118,7 @@ internal static class FSEmit {
     }
 
     internal static void WriteSemant(StreamWriter src,  int index, FSharpSemanticAction semanticAction) {
-        src.WriteLine($"let sem{index:000} stack = {{ nodeType = {semanticAction}; stack = stack }}");
+        src.WriteLine($"let sem{index:000} stack (sl, sc) = {{ nodeType = {semanticAction}; stack = stack; srcline=sl; srccol=sc }}");
     }
 
     internal static void WriteFunc(StreamWriter src, StreamWriter sig, string name, string types, string args, string body, bool export = true) {
@@ -134,9 +134,9 @@ internal static class FSEmit {
         WriteDual(src, sig, "// Parser actions");
         WriteDual(src, sig, "type Action = ");
         WriteDual(src, sig, "| Accept of int");
-        WriteDual(src, sig, "| Shift of uint64");
-        WriteDual(src, sig, "| Reduce of uint64");
-        WriteDual(src, sig, "| Goto of uint64");
+        WriteDual(src, sig, "| Shift of int");
+        WriteDual(src, sig, "| Reduce of int");
+        WriteDual(src, sig, "| Goto of int");
         WriteDual(src, sig, "| Error");
         WriteDual(src, sig, "");
 
@@ -145,15 +145,16 @@ internal static class FSEmit {
         WriteDual(src, sig, "type StackElement = ");
         WriteDual(src, sig, "| Token of LexToken");
         WriteDual(src, sig, "| Action of SemanticAction");
-        WriteDual(src, sig, "and SemanticAction = { nodeType: SemanticActionType; stack: StackElement list }");
+        WriteDual(src, sig, "| ParserAction of obj list");
+        WriteDual(src, sig, "and SemanticAction = { nodeType: SemanticActionType; stack: StackElement list; srcline: int; srccol: int }");
         WriteDual(src, sig, "");
 
         // Write a default error
         src.WriteLine("// Basic helpers error");
         src.WriteLine("let a = Accept 1");
-        src.WriteLine("let r p = Reduce (uint64 p)");
-        src.WriteLine("let s t = Shift (uint64 t)");
-        src.WriteLine("let g s = Goto (uint64 s)");
+        src.WriteLine("let r p = Reduce (int p)");
+        src.WriteLine("let s t = Shift (int t)");
+        src.WriteLine("let g s = Goto (int s)");
         src.WriteLine("let e = Error");
         src.WriteLine();
 
@@ -208,7 +209,7 @@ internal static class FSEmit {
 
         // Write lookup
         WriteDual(src, sig, "// Lookup function for lookup up the next action in table");
-        WriteFunc(src, sig, "table_lookup", "uint64 -> int -> Action", "(state: uint64) (sym: int)", "_table[int state, sym]");
+        WriteFunc(src, sig, "table_lookup", "int -> int -> Action", "(state: int) (sym: int)", "_table[int state, sym]");
         WriteDual(src, sig, "");
 
         // Write eps ID

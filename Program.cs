@@ -36,5 +36,8 @@ if (lr.Table is null) {
     return;
 }
 
-// Create emitter
-FSEmit.Emit(lr.Table, G, "parsersemantics.fs");
+// Emit binary encoding of the table
+BinaryTableEmit.Emit(lr.Table, G, "parsetable.g.bin");
+
+// Emit F# code
+FSEmit.Emit(lr.Table, G, "parsersemantics.g.fs");

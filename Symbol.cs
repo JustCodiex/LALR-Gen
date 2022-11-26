@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace ParserGen;     
 
-namespace ParserGen;     
 internal class Symbol {
 
     public string Sym { get; }
@@ -32,4 +27,3 @@ internal class Symbol {
     public override int GetHashCode() => this.Sym.GetHashCode();
 
 }
-

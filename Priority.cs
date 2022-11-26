@@ -1,4 +1,5 @@
 ﻿namespace ParserGen;     
+
 public enum Association {
     
     left,
@@ -19,4 +20,3 @@ internal record Priority(int Level, Association Association, Symbol[] Tokens) {
     internal bool IsHigherThanMe(Priority other) => this.Level < other.Level;
 
 }
-

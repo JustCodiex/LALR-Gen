@@ -2,9 +2,9 @@
 
 namespace ParserGen;
 
-internal static class MacroOp {
+internal static partial class MacroOp {
 
-    internal static readonly Regex __Type = new(@"\$(<(?<type>\w+)>)?(?<i>\d+)");
+    internal static readonly Regex __Type = __TypeRegexGenerator();
     internal static readonly Regex __lookupType = new(@"\$(?<i>\d+)\.<(?<type>\w+)>(?<j>\d+)");
 
     internal static Production[] Optional(Grammar G, Production P, Symbol[] args, int i) {
@@ -71,5 +71,7 @@ internal static class MacroOp {
 
     }
 
+    [GeneratedRegex("\\$(<(?<type>\\w+)>)?(?<i>\\d+)")]
+    private static partial Regex __TypeRegexGenerator();
 }
 

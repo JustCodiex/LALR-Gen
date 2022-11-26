@@ -12,12 +12,11 @@ internal class LR1State {
     }
 
     public void Push(Symbol symbol, LR1Action action) {
-        if (this.Actions.ContainsKey(symbol)) {
-            this.Actions[symbol].Add(action);
+        if (this.Actions.TryGetValue(symbol, out List<LR1Action>? value)) {
+            value.Add(action);
         } else {
             this.Actions[symbol] = new() { action };
         }
     }
 
 }
-

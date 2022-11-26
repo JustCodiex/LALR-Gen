@@ -4,11 +4,19 @@ using System.Text.RegularExpressions;
 
 namespace ParserGen;
 
-internal class Grammar {
+internal partial class Grammar {
 
-    static readonly Regex __prec = new(@"%(?<type>left|right|none)\s+(?<tokens>(\w|\s)+)");
-    static readonly Regex __rule = new(@"(?<lhs>\w+)\s*::=(?<rhs>(\w|\s|;|!|~|\$|\(|\)|,)+)\{(?<code>.*?)\}\s*(%prec\s+(?<prec>(\w)+))?");
-    static readonly Regex __ruex = new(@"\|(?<rhs>(\w|\s|\$|!|~|;|\(|\)|,)+)\{(?<code>.*?)\}\s*(%prec\s+(?<prec>(\w)+))?");
+    [GeneratedRegex("%(?<type>left|right|none)\\s+(?<tokens>(\\w|\\s)+)")]
+    private static partial Regex __precGenerator();
+
+    [GeneratedRegex("(?<lhs>\\w+)\\s*::=(?<rhs>(\\w|\\s|;|!|~|\\$|\\(|\\)|,)+)\\{(?<code>.*?)\\}\\s*(%prec\\s+(?<prec>(\\w)+))?")]
+    private static partial Regex __ruleGenerator();
+    [GeneratedRegex("\\|(?<rhs>(\\w|\\s|\\$|!|~|;|\\(|\\)|,)+)\\{(?<code>.*?)\\}\\s*(%prec\\s+(?<prec>(\\w)+))?")]
+    private static partial Regex __ruexGenerator();
+
+    static readonly Regex __prec = __precGenerator();
+    static readonly Regex __rule = __ruleGenerator();
+    static readonly Regex __ruex = __ruexGenerator();
 
     internal List<Priority> Priorities { get; }
 
@@ -17,6 +25,8 @@ internal class Grammar {
     internal List<string> Using { get; }
 
     internal List<string> InClass { get; }
+
+    internal string Namespace { get; set; }
 
     internal int InClassStartIndex { get; set; }
 
@@ -39,20 +49,21 @@ internal class Grammar {
     public byte[] ClassHash { get; set; }
 
     internal Grammar() {
-        this.LowestPriority = new(-1, Association.none, Array.Empty<Symbol>());
-        this.Priorities = new() { this.LowestPriority };
-        this.Productions = new();
-        this.Symbols = new();
-        this.Using = new();
-        this.InClass = new();
-        this.InClassStartIndex = 0;
-        this.Symbols["$"] = EndOfInput;
-        this.Symbols["~"] = EmptySymbol;
-        this.ProductionHash = Array.Empty<byte>();
-        this.SemanticHash = Array.Empty<byte>();
-        this.UsingHash = Array.Empty<byte>();
-        this.ClassHash = Array.Empty<byte>();
-        this.Macros = (new MacroType[] { 
+        LowestPriority = new(-1, Association.none, Array.Empty<Symbol>());
+        Priorities = new() { LowestPriority };
+        Productions = new();
+        Symbols = new();
+        Using = new();
+        InClass = new();
+        Namespace = string.Empty;
+        InClassStartIndex = 0;
+        Symbols["$"] = EndOfInput;
+        Symbols["~"] = EmptySymbol;
+        ProductionHash = Array.Empty<byte>();
+        SemanticHash = Array.Empty<byte>();
+        UsingHash = Array.Empty<byte>();
+        ClassHash = Array.Empty<byte>();
+        Macros = (new MacroType[] { 
             new MacroType("optional", MacroOp.Optional),
             //new MacroType("separated_list"),
             //new MacroType("separated_list_nonempty"),
@@ -64,7 +75,7 @@ internal class Grammar {
     internal void CalculateFirsts() {
 
         // Add all terminal symbols to their of first set
-        foreach (var (_, sym) in this.Symbols) {
+        foreach (var (_, sym) in Symbols) {
             if (sym.IsTerminal) {
                 sym.First.Add(sym);
             }
@@ -74,7 +85,7 @@ internal class Grammar {
         while (updated) {
             updated = false;
 
-            foreach (Production p in this.Productions) {
+            foreach (Production p in Productions) {
 
                 int i;
                 for (i = 0; i < p.Rhs.Length; i++) {
@@ -163,6 +174,13 @@ internal class Grammar {
                         mode = ReadMode.InClassData;
                         grammar.InClassStartIndex = i;
                         continue;
+                    } else if (lines[i].StartsWith("@namespace")) {
+                        Console.WriteLine();
+                        Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                        grammar.Namespace = lines[i][10..].Trim();
+                        Console.ForegroundColor = ConsoleColor.Gray;
+                        Console.WriteLine();
+                        continue;
                     }
 
                     int commentCut = lines[i].IndexOf('#');
@@ -207,7 +225,7 @@ internal class Grammar {
         Console.WriteLine("The following productions were detected:");
         Console.ForegroundColor = ConsoleColor.DarkYellow;
         for (int i = 0; i < grammar.Productions.Count; i++) {
-            Console.WriteLine($"[{(i+1):000}] {grammar.Productions[i]}");
+            Console.WriteLine($"[{i+1:000}] {grammar.Productions[i]}");
         }
         Console.WriteLine();
         Console.ForegroundColor = ConsoleColor.White;
@@ -220,18 +238,18 @@ internal class Grammar {
     internal void ComputeHashes(HashAlgorithm hash) {
 
         // Compute hashes
-        this.ClassHash = hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join(' ', this.InClass)));
-        this.UsingHash = hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join(' ', this.Using)));
-        this.SemanticHash = hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join(' ', this.Productions.Select(x => x.SemanticInput))));
-        this.ProductionHash = hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join(' ', this.Productions)));
+        ClassHash = hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join(' ', InClass)));
+        UsingHash = hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join(' ', Using)));
+        SemanticHash = hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join(' ', Productions.Select(x => x.SemanticInput))));
+        ProductionHash = hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join(' ', Productions)));
 
     }
 
     internal void InjectEOF() {
 
-        if (this.Productions.Count > 0) {
-            if (this.Productions[0].Rhs.Length > 0 && this.Productions[0].Rhs[^1] != EndOfInput) {
-                this.Productions[0].Rhs = this.Productions[0].Rhs.Append(EndOfInput).ToArray();
+        if (Productions.Count > 0) {
+            if (Productions[0].Rhs.Length > 0 && Productions[0].Rhs[^1] != EndOfInput) {
+                Productions[0].Rhs = Productions[0].Rhs.Append(EndOfInput).ToArray();
             }
         }
 
@@ -290,8 +308,8 @@ internal class Grammar {
     }
 
     private static Symbol NewSymbol (Grammar G, string sym, bool terminal = false) {
-        if (G.Symbols.ContainsKey(sym)) {
-            return G.Symbols[sym];
+        if (G.Symbols.TryGetValue(sym, out Symbol? value)) {
+            return value;
         } else {
             if (Verbose) {
                 Console.ForegroundColor = ConsoleColor.DarkGreen;
@@ -358,7 +376,7 @@ internal class Grammar {
     internal void RemoveUnusedProductions() {
 
         // Get set of unreached non-terminals
-        Set<Symbol> nonTerminals = new(this.Symbols.Where(x => !x.Value.IsTerminal).Select(x => x.Value));
+        Set<Symbol> nonTerminals = new(Symbols.Where(x => !x.Value.IsTerminal).Select(x => x.Value));
 
         // Get current production
         Set<Production> touched = new();
@@ -368,7 +386,7 @@ internal class Grammar {
             nonTerminals.Remove(p.Lhs);
             touched.Add(p);
             foreach (Symbol s in p.Rhs) {
-                Production[] gotos = this.Productions.Where(x => x.Lhs == s).ToArray();
+                Production[] gotos = Productions.Where(x => x.Lhs == s).ToArray();
                 foreach (Production sp in gotos) {
                     if (!touched.Contains(sp)) {
                         Follow(sp);
@@ -378,23 +396,23 @@ internal class Grammar {
         }
 
         // Call on grammar entry
-        Follow(this.Productions[0]);
+        Follow(Productions[0]);
 
         // If any left in non terminals
         if (nonTerminals.Count > 0) {
-            Production[] unreachable = this.Productions.Where(x => nonTerminals.Contains(x.Lhs)).ToArray();
+            Production[] unreachable = Productions.Where(x => nonTerminals.Contains(x.Lhs)).ToArray();
             Console.ForegroundColor = ConsoleColor.Red;
             foreach (Production u in unreachable) {
                 Console.WriteLine($"Detected unreachable production [{u}]");
             }
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine();
-            this.Productions.RemoveAll(x => unreachable.Contains(x));
+            Productions.RemoveAll(x => unreachable.Contains(x));
         }
 
         // Loop over productions and assign an index
-        for (int i = 0; i < this.Productions.Count; i++) {
-            this.Productions[i].Index = i;
+        for (int i = 0; i < Productions.Count; i++) {
+            Productions[i].Index = i;
         }
 
     }
@@ -407,20 +425,20 @@ internal class Grammar {
                     best = ls[i];
                 }
             }
-            return this.GetPriority(best);
+            return GetPriority(best);
         } else {
-            return this.LowestPriority;
+            return LowestPriority;
         }
     }
 
     internal Priority GetPriority(Symbol symbol)
-        => this.Priorities.Find(x => x.Tokens.Contains(symbol)) ?? this.LowestPriority;
+        => Priorities.Find(x => x.Tokens.Contains(symbol)) ?? LowestPriority;
 
     internal void RunMacros(bool fullmacroset) {
 
         // Make sure user has allowed macros
         if (!fullmacroset) {
-            foreach (var rule in this.Productions) {
+            foreach (var rule in Productions) {
                 if (rule.Rhs.Any(x => x is MacroSymbol)) {
                     Console.WriteLine($"Error: Production {rule.Index} contains a macro. To enable macros use the -macro compile flag.");
                 }
@@ -432,20 +450,20 @@ internal class Grammar {
         int i = 0;
 
         // Run over each new production
-        while (i < this.Productions.Count) {
+        while (i < Productions.Count) {
 
             // Contains a macro?
-            if (this.Productions[i].Rhs.Any(x => x is MacroSymbol)) {
+            if (Productions[i].Rhs.Any(x => x is MacroSymbol)) {
 
                 // Loop over symbols until we find the first macro
-                for (int j = 0; j < this.Productions[i].Rhs.Length; j++) {
-                    if (this.Productions[i].Rhs[j] is MacroSymbol x) {
+                for (int j = 0; j < Productions[i].Rhs.Length; j++) {
+                    if (Productions[i].Rhs[j] is MacroSymbol x) {
 
                         // Run macro
-                        var subs = x.Macro.Creator(this, this.Productions[i], x.MacroArgs, j);
+                        var subs = x.Macro.Creator(this, Productions[i], x.MacroArgs, j);
 
                         // Add new productions
-                        this.Productions.AddRange(subs);
+                        Productions.AddRange(subs);
 
                         // break -> This way can process remaining macro symbols later without too many problems
                         break;
@@ -453,7 +471,7 @@ internal class Grammar {
                 }
 
                 // Remove this production
-                this.Productions.RemoveAt(i);
+                Productions.RemoveAt(i);
 
             } else { // go to next
                 
@@ -464,8 +482,8 @@ internal class Grammar {
         }
 
         // Loop over productions and assign a new ID
-        for (i = 0; i < this.Productions.Count; i++) {
-            this.Productions[i].Index = i;
+        for (i = 0; i < Productions.Count; i++) {
+            Productions[i].Index = i;
         }
 
     }

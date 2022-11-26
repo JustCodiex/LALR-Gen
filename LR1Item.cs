@@ -149,4 +149,3 @@ internal class LALR1Item : LR1Item {
     public override int GetHashCode() => base.GetHashCode();
 
 }
-

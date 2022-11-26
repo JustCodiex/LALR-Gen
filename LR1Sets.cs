@@ -51,8 +51,7 @@ internal partial class LR1 {
                         }
 
                         // Loop over all firsts and collect those
-                        if (this.FirstSets.ContainsKey(rule.Rhs[j])) {
-                            var firstsSets = this.FirstSets[rule.Rhs[j]];
+                        if (FirstSets.TryGetValue(rule.Rhs[j], out Set<Symbol>? firstsSets)) {
                             for (int k = 0; k < firstsSets.Count; k++) {
 
                                 // Update eps

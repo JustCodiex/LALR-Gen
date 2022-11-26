@@ -35,4 +35,3 @@ internal class LR1Action : IAction {
     public string EncodedString() => "0x" + this.Encode().ToString("X") + "u";
 
 }
-

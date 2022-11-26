@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace ParserGen; 
 
-namespace ParserGen; 
 internal enum ActionType {
     Error,
     Accept,
@@ -20,4 +15,3 @@ internal interface IAction {
     string EncodedString();
 
 }
-

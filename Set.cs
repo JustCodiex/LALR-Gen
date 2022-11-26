@@ -98,4 +98,3 @@ internal class Set<T> : IEnumerable<T>, ICollection<T> {
     public void CopyTo(T[] array, int arrayIndex) => ((ICollection<T>)this.m_items).CopyTo(array, arrayIndex);
 
 }
-

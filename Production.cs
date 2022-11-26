@@ -1,4 +1,5 @@
 ﻿namespace ParserGen;     
+
 internal class Production {
 
     public Symbol Lhs { get; }
@@ -32,4 +33,3 @@ internal class Production {
     public string ToComment() => $"[{this.Lhs.Sym}] ::= {string.Join(' ', this.Rhs.Select(x => x.IsTerminal ? $"{x.Sym}" : $"[{x.Sym}]"))}";
 
 }
-

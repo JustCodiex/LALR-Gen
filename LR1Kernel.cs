@@ -30,4 +30,3 @@ internal class LR1Kernel {
     public override int GetHashCode() => base.GetHashCode();
 
 }
-
